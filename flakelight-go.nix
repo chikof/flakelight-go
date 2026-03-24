@@ -108,8 +108,6 @@ in {
           go = pkgs.${goPkgName};
         in [
           go
-          pkgs.gotools
-          pkgs.golangci-lint
         ];
       };
 

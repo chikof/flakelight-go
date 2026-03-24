@@ -10,7 +10,7 @@ Initializes a Go project flake from its source directory.
 
 Sets `package` to a Go package built from the flake source.
 
-Adds `go`, `gotools`, and `golangci-lint` to the default devShell.
+Adds `go` to the default devShell.
 
 Adds checks for `go test` and `gofmt`.
 
