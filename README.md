@@ -21,13 +21,24 @@ Configures `go` files to be formatted with `gofmt`.
 `fileset` configures the fileset the package is built with. By default, it
 includes `*.go`, `go.mod`, `go.sum`, and `.golangci.yml`.
 
-`go.version` selects the Go version to use by looking up `pkgs.go_1_<version>`.
-For example:
+`go.version` selects the Go version by looking up `pkgs.go_1_<version>`. For
+example, `go.version = 23;` uses `pkgs.go_1_23`. The default is `25`.
 
-- `go.version = 23;` → `pkgs.go_1_23`
-- `go.version = 25;` → `pkgs.go_1_25`
+`go.ldflags` passes linker flags to `buildGoModule`. The default is `[]`.
 
-The default Go version is `25`.
+`go.buildFlags` passes build flags to `buildGoModule`. The default is `[]`.
+
+`go.tags` sets Go build tags. The default is `[]`.
+
+`go.subPackages` sets the subpackages to build. The default is `[ "." ]`.
+
+`go.vendorHash` sets the `vendorHash` used by `buildGoModule`. Projects with
+external dependencies usually need this set. A common workflow is to start with
+a fake hash, build once, then replace it with the hash reported by Nix. The
+default is `null`.
+
+`go.proxyVendor` sets the `proxyVendor` option for `buildGoModule`. The default
+is `false`.
 
 ## Getting started
 
@@ -50,34 +61,32 @@ You can call this flake directly:
 }
 ```
 
-To choose a specific Go version:
+With Go build options:
 
 ```nix
 {
   inputs.flakelight-go.url = "github:chikof/flakelight-go";
-  outputs = { flakelight-go, ... }:
+
+  outputs = {flakelight-go, ...}:
     flakelight-go ./. {
-      go.version = 25;
+      go = {
+        version = 25;
+        ldflags = [
+          "-w"
+          "-s"
+          "-X main.version=dev"
+        ];
+        buildFlags = [ "-trimpath" ];
+        tags = [ "go" "flakelight" ];
+        subPackages = [ "." ];
+        vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+        proxyVendor = true;
+      };
     };
 }
 ```
 
 Alternatively, add this module to your Flakelight config:
-
-```nix
-{
-  inputs = {
-    flakelight.url = "github:nix-community/flakelight";
-    flakelight-go.url = "github:chikof/flakelight-go";
-  };
-
-  outputs = { flakelight, flakelight-go, ... }: flakelight ./. {
-    imports = [ flakelight-go.flakelightModules.default ];
-  };
-}
-```
-
-With a pinned Go version:
 
 ```nix
 {

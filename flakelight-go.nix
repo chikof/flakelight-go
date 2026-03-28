@@ -43,6 +43,45 @@ in {
           - 25 -> pkgs.go_1_25
         '';
       };
+
+      ldflags = mkOption {
+        type = types.listOf types.str;
+        default = ["-w" "-s"];
+        example = ["-w" "-s"];
+        description = ''
+          Go link flags to use.
+          More info: https://pkg.go.dev/cmd/link
+        '';
+      };
+
+      tags = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = ["hello" "world"];
+      };
+
+      subPackages = mkOption {
+        type = types.listOf types.str;
+        default = ["."];
+        example = ["."];
+      };
+
+      vendorHash = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+      };
+
+      proxyVendor = mkOption {
+        type = types.bool;
+        default = false;
+      };
+
+      buildFlags = mkOption {
+        type = types.listOf types.str;
+        default = [
+          "-mod=readonly"
+        ];
+      };
     };
   };
 
@@ -52,10 +91,13 @@ in {
       description = mkDefault "Simple Go hello world built with Flakelight";
 
       package = pkgs: let
-        go = pkgs.${goPkgName};
+        go =
+          pkgs.${goPkgName};
       in
         pkgs.buildGoModule {
           inherit (config) pname;
+          inherit (config.go) vendorHash subPackages ldflags buildFlags proxyVendor;
+
           version = "0.1.0";
 
           src = toSource {
@@ -63,8 +105,7 @@ in {
             inherit (config) fileset;
           };
 
-          vendorHash = null;
-          subPackages = ["."];
+          nativeBuildInputs = [go];
 
           meta = {
             description = config.description;
