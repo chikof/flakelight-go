@@ -24,22 +24,6 @@ includes `*.go`, `go.mod`, `go.sum`, and `.golangci.yml`.
 `go.version` selects the Go version by looking up `pkgs.go_1_<version>`. For
 example, `go.version = 23;` uses `pkgs.go_1_23`. The default is `25`.
 
-`go.ldflags` passes linker flags to `buildGoModule`. The default is `[]`.
-
-`go.buildFlags` passes build flags to `buildGoModule`. The default is `[]`.
-
-`go.tags` sets Go build tags. The default is `[]`.
-
-`go.subPackages` sets the subpackages to build. The default is `[ "." ]`.
-
-`go.vendorHash` sets the `vendorHash` used by `buildGoModule`. Projects with
-external dependencies usually need this set. A common workflow is to start with
-a fake hash, build once, then replace it with the hash reported by Nix. The
-default is `null`.
-
-`go.proxyVendor` sets the `proxyVendor` option for `buildGoModule`. The default
-is `false`.
-
 ## Getting started
 
 To create a new project in an empty directory, run the following:
@@ -61,7 +45,7 @@ You can call this flake directly:
 }
 ```
 
-With Go build options:
+With full control over package output (inclusing custom binaries):
 
 ```nix
 {
@@ -69,19 +53,17 @@ With Go build options:
 
   outputs = {flakelight-go, ...}:
     flakelight-go ./. {
-      go = {
-        version = 25;
-        ldflags = [
-          "-w"
-          "-s"
-          "-X main.version=dev"
-        ];
-        buildFlags = [ "-trimpath" ];
-        tags = [ "go" "flakelight" ];
-        subPackages = [ "." ];
-        vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-        proxyVendor = true;
-      };
+      package = pkgs:
+        pkgs.buildGoModule {
+          pname = "my-app";
+          version = "0.1.0";
+          src = ./.;
+
+          # Build multiple binaries from cmd/
+          subPackages = [ "./cmd/api" "./cmd/worker" ];
+
+          vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+        };
     };
 }
 ```

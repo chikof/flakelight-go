@@ -1,5 +1,3 @@
-# flakelight-go -- Go module for flakelight
-# SPDX-License-Identifier: MIT
 {
   lib,
   src,
@@ -8,12 +6,33 @@
   inputs,
   ...
 }: let
-  inherit (builtins) pathExists toString;
-  inherit (lib) mkDefault mkIf mkMerge mkOption types;
+  inherit (lib) mkDefault mkMerge mkOption types;
   inherit (lib.fileset) fileFilter maybeMissing toSource unions;
   inherit (flakelight.types) fileset;
 
   goPkgName = "go_1_${toString config.go.version}";
+  defaultPname = let
+    name = baseNameOf (toString src);
+  in
+    if name == ""
+    then "hello"
+    else name;
+  defaultPackage = pkgs: let
+    go = pkgs.${goPkgName};
+  in
+    pkgs.buildGoModule {
+      pname = defaultPname;
+
+      version = "0.1.0";
+      vendorHash = null;
+
+      src = toSource {
+        root = src;
+        inherit (config) fileset;
+      };
+
+      nativeBuildInputs = [go];
+    };
 in {
   options = {
     fileset = mkOption {
@@ -43,75 +62,15 @@ in {
           - 25 -> pkgs.go_1_25
         '';
       };
-
-      ldflags = mkOption {
-        type = types.listOf types.str;
-        default = ["-w" "-s"];
-        example = ["-w" "-s"];
-        description = ''
-          Go link flags to use.
-          More info: https://pkg.go.dev/cmd/link
-        '';
-      };
-
-      tags = mkOption {
-        type = types.listOf types.str;
-        default = [];
-        example = ["hello" "world"];
-      };
-
-      subPackages = mkOption {
-        type = types.listOf types.str;
-        default = ["."];
-        example = ["."];
-      };
-
-      vendorHash = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-      };
-
-      proxyVendor = mkOption {
-        type = types.bool;
-        default = false;
-      };
-
-      buildFlags = mkOption {
-        type = types.listOf types.str;
-        default = [
-          "-mod=readonly"
-        ];
-      };
     };
   };
 
   config = mkMerge [
-    (mkIf (pathExists (src + /main.go)) {
-      pname = mkDefault "hello";
-      description = mkDefault "Simple Go hello world built with Flakelight";
+    {
+      package = mkDefault defaultPackage;
+    }
 
-      package = pkgs: let
-        go =
-          pkgs.${goPkgName};
-      in
-        pkgs.buildGoModule {
-          inherit (config) pname;
-          inherit (config.go) vendorHash subPackages ldflags buildFlags proxyVendor;
-
-          version = "0.1.0";
-
-          src = toSource {
-            root = src;
-            inherit (config) fileset;
-          };
-
-          nativeBuildInputs = [go];
-
-          meta = {
-            description = config.description;
-          };
-        };
-
+    {
       checks = pkgs: let
         go = pkgs.${goPkgName};
         source = toSource {
@@ -120,7 +79,7 @@ in {
         };
       in {
         test =
-          pkgs.runCommand "test-${config.pname}" {
+          pkgs.runCommand "test-${defaultPname}" {
             nativeBuildInputs = [go];
           } ''
             cp -r ${source} source
@@ -131,7 +90,7 @@ in {
           '';
 
         fmt =
-          pkgs.runCommand "fmt-${config.pname}" {
+          pkgs.runCommand "fmt-${defaultPname}" {
             nativeBuildInputs = [go];
           } ''
             cp -r ${source} source
@@ -141,7 +100,7 @@ in {
             touch $out
           '';
       };
-    })
+    }
 
     {
       devShell = {
