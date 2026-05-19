@@ -22,7 +22,7 @@ Configures `go` files to be formatted with `gofmt`.
 includes `*.go`, `go.mod`, `go.sum`, and `.golangci.yml`.
 
 `go.version` selects the Go version by looking up `pkgs.go_1_<version>`. For
-example, `go.version = 23;` uses `pkgs.go_1_23`. The default is `25`.
+example, `go.version = 23;` uses `pkgs.go_1_23`. The default is `26`.
 
 ## Getting started
 
@@ -80,7 +80,7 @@ Alternatively, add this module to your Flakelight config:
   outputs = { flakelight, flakelight-go, ... }: flakelight ./. {
     imports = [ flakelight-go.flakelightModules.default ];
 
-    go.version = 25;
+    go.version = 26;
   };
 }
 ```

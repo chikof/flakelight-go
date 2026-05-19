@@ -52,14 +52,14 @@ in {
     go = {
       version = mkOption {
         type = types.int;
-        default = 25;
+        default = 26;
         example = 22;
         description = ''
           Go minor version to use, mapped to pkgs.go_1_<version>.
           For example:
-          - 22 -> pkgs.go_1_22
-          - 23 -> pkgs.go_1_23
-          - 25 -> pkgs.go_1_25
+          - 23 -> pkgs.go_1_22
+          - 24 -> pkgs.go_1_23
+          - 26 -> pkgs.go_1_26
         '';
       };
     };
